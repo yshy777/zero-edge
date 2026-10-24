@@ -1,0 +1,48 @@
+# ===== 数据（25GB，不入库；下载见 README / Zenodo）=====
+data/
+
+# ===== Python 缓存 =====
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.ipynb_checkpoints/
+
+# ===== 实验产物 / 模型 checkpoint =====
+*.log
+*.pt
+*.pth
+*.ckpt
+expri_save_models/
+eval_logs_evalmode/
+
+# ===== 论文插图 / 内部文档（不进代码库）=====
+P4*.pdf
+P4*.png
+P5*.pdf
+P5*.png
+INTEGRATION_PLAN.md
+paper/
+rmpi_paper.txt
+results_summary*.md
+
+# ===== dev 诊断/剖析脚本（非方法代码）=====
+profile_*.py
+check_*.py
+diagnose_*.py
+leak_test*.py
+verify_*.py
+microbench_*.py
+find_large_tensors.py
+dump_completion_cands.py
+perrel_driver.log
+
+# ===== 驱动 shell 脚本 + 驱动日志 =====
+*.sh
+*_driver.log
+sentinel_*.log
+smoke_*.log
+watch_*.log
+
+# ===== 其他临时 =====
+_lmdb_test/
