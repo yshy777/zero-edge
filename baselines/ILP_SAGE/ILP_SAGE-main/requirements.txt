@@ -1,0 +1,13 @@
+# Core Dependencies
+numpy==1.26.4
+torch==2.2.0
+torchvision==0.17.0
+torchaudio==2.2.0
+torcheval
+torchmetrics==1.2.1
+scikit-learn==1.6.1
+transformers==4.38.0
+
+# DGL with CUDA/Torch support
+--find-links https://data.dgl.ai/wheels/torch-2.2/repo.html
+dgl

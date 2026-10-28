@@ -1,5 +1,8 @@
 # ===== 数据（25GB，不入库；下载见 README / Zenodo）=====
-data/
+data/*
+!data/security_kg_full_ind/
+data/security_kg_full_ind/*
+!data/security_kg_full_ind/case_study_full_ind.json
 
 # ===== Python 缓存 =====
 __pycache__/
@@ -34,11 +37,9 @@ leak_test*.py
 verify_*.py
 microbench_*.py
 find_large_tensors.py
-dump_completion_cands.py
 perrel_driver.log
 
-# ===== 驱动 shell 脚本 + 驱动日志 =====
-*.sh
+# ===== 驱动日志 =====
 *_driver.log
 sentinel_*.log
 smoke_*.log

@@ -19,9 +19,13 @@ rmpi/                 main method (RMPI-D, ProRMPI prototype prior, 2+SC product
   managers/ model/ subgraph_extraction/ utils/   method internals
 security_kg/          security-KG data pipeline (NVD → KG → splits → fingerprints → threat profile)
   download.py nvd.py build_kg.py rebuild_fingerprint.py risk_profile.py aco*.py attack_centrality*.py ...
+rmpi/*.sh             verbatim run chains behind the paper's tables (queue_c6_post_chain.sh = main table;
+                      queue_c6_p4_auc.sh = route-B AUC ladders; run_ns50_chain.sh = the 50-candidate
+                      robustness block; see the reproducibility notes below)
 cluster_manager.py    shared clustering module (ProtoRMPI prototype prior)
 baselines/
   CoMPILE/CoMPILE_github/   CoMPILE (Mai et al., AAAI 2021) + our security-split conversion
+  ILP_SAGE/ILP_SAGE-main/   ILP-SAGE (Rahimi et al., Neurocomputing 2026) + our zec/ adaptation
   grail/data/WN18RR/        WN18RR source data (for the ZEC split; benchmark from Dettmers et al.)
   transductive_kge_baseline.py   TransE/DistMult/ComplEx/RotatE baseline
   security_fingerprint_baseline.py  CPE-fingerprint popularity baseline
@@ -153,6 +157,12 @@ python ../baselines/transductive_kge_baseline.py -d security_kg_ind     # TransE
 
 # CPE-fingerprint popularity baseline (the popularity-prior head representation)
 python ../baselines/security_fingerprint_baseline.py
+
+# ILP-SAGE (Neurocomputing 2026) under the identical ZEC protocol — MRR 0.0936 (12-cand) / 0.0226 (50-cand),
+# above the tie-break floor, below uniform random and below the base row (environment recipe: zec/README_zec.md)
+cd ../baselines/ILP_SAGE/ILP_SAGE-main
+python -u zec/ilpsage_zec.py train --data-dir ../data/security_kg_full_ind
+python -u zec/ilpsage_zec.py rank  --data-dir ../data/security_kg_full_ind --block-size 12
 ```
 
 GraIL's enclosing branch is replicated by RMPI-base (`--ablation 0`), so the GraIL rows are produced by the RMPI-base commands above. NBFNet is cited from its published results — its CUDA extension does not build in a CPU-only environment and its full-graph boundary tensor exceeds our memory budget.
@@ -163,6 +173,9 @@ GraIL's enclosing branch is replicated by RMPI-base (`--ablation 0`), so the Gra
 python ../security_kg/risk_profile.py            # threat profile + oracle ceiling (ROC-AUC 0.886)
 python ../security_kg/probe_cands_confound.py    # completion-predicted term dissects to a coverage marker (0.4783 covered-only)
 python ../security_kg/verify_product_artifact.py # product-surface artifact re-derivation from raw NVD
+python ../security_kg/case_study_full_ind.py     # per-CVE case-study rows (§ case walk-through): re-runs the risk-profile
+                                                 #   cands pipeline, verifies every aggregate against risk_profile_cands.json,
+                                                 #   and writes data/security_kg_full_ind/case_study_full_ind.json (ships in-repo)
 ```
 
 ---
@@ -170,10 +183,11 @@ python ../security_kg/verify_product_artifact.py # product-surface artifact re-d
 ## Protocol and reproducibility notes
 
 - **Candidate pool**: 12 candidates per query — 11 sampled negatives + the true tail, per-CWE-class (head side) and per-CVE (tail side); seed 41504, single run.
-- **Floors are sample-count dependent**: the tie-break floor reads 0.1068 at 12 candidates and 0.0496–0.0498 at a larger count; all comparisons in the paper are within the 12-candidate protocol.
+- **Floors are sample-count dependent**: the tie-break floor reads $1/K$ (0.0833 at 12 candidates, 0.0200 at 50) and uniform random $H_K/K$ (0.259 at 12, 0.090 at 50); base lands at MRR 0.1068 (12) / 0.0503–0.0514 (50). The paper's headline tables use the 12-candidate protocol; the 50-candidate robustness re-run is reported separately (evaluation section).
 - **The negative-sampler seed is wired** (`test_ranking_P.py --seed`, default 41504): re-running the shipped scripts is itself reproducible. Re-runs reproduce the reported numbers under the fixed protocol; the paper does not claim bit-exactness across platforms.
+- **Run scripts are released verbatim** (`rmpi/*.sh`, `security_kg/*.sh`): these are the dev-machine chains that produced the paper's tables, each with an in-file comment naming the log files it wrote and the protocol it ran. They `cd` into the development checkout and two carry machine-specific paths — `RMPI_DB_ROOT=D:/rmpi_subgraphs` in `queue_c6_p4_auc.sh` and `D:/ilpsage_venv` in `queue_stage2_ilpsage.sh` — adjust these before re-running; the canonical per-command invocations in the sections above are the portable core of each chain.
 - The security-KG splits are disclosed as semi-inductive on the tail side (the CWE taxonomy is closed — 787 classes at training time; 23 test-only classes fall to a shared OOV slot, affecting 34 of 49,535 test links).
-- The CPE-fingerprint side channel exists only where NVD carries product records: 48.89% of unseen CVEs carry none and keep the popularity-prior fallback.
+- The CPE-fingerprint side channel exists only where NVD carries product records: 48.89% of unseen CVEs (47.4% of test links) carry a non-empty CPE record; the rest keep the popularity-prior fallback.
 
 ## Attribution and license
 
@@ -181,4 +195,4 @@ Built on [RMPI](https://github.com/zjukg/RMPI) (Geng et al., ICDE 2023) — the 
 
 ## Data availability
 
-The security KG (24 GB processed) is regenerable end-to-end from public NVD/MITRE/CISA sources with the scripts above (see `security_kg/`). A frozen archive of `security_kg_full_ind` (the main-table split, 2026-CVE test cut, seed 41504) is available from the authors on request and will be deposited to a public archive (Zenodo) with a DOI at publication time.
+The security KG (24 GB processed) is regenerable end-to-end from public NVD/MITRE/CISA sources with the scripts above (see `security_kg/`). A frozen archive of `security_kg_full_ind` (the main-table split, 2026-CVE test cut, seed 41504) and the trained ILP-SAGE checkpoint (79 MB) are available from the authors on request and will be deposited to a public archive (Zenodo) with a DOI at publication time. One derived artifact ships in-repo: `data/security_kg_full_ind/case_study_full_ind.json`, the per-CVE case-study rows of the Stage-3 walk-through; `security_kg/case_study_full_ind.py` regenerates it from the frozen split and verifies it against `risk_profile_cands.json`.
