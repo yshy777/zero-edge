@@ -46,3 +46,12 @@ python -u zec/ilpsage_zec.py rank --data-dir ../data/security_kg_full_ind --ckpt
 | 50 candidates | **0.0226** (full-split 0.0225) | ≈ floor 1/50 | — |
 
 The dev-machine chain that ran these rows is `rmpi/queue_stage2_ilpsage.sh` (verbatim; it hardcodes the `D:/ilpsage_venv` path — adjust before re-running).
+
+## Upstream license note
+
+The upstream ILP-SAGE repository (github.com/mohammadRahimi1993/ILP_SAGE) does not
+carry an explicit license at the time of this release. Its `src/` is shipped here
+unmodified solely for academic reproduction of the paper's ILP-SAGE rows, with the
+upstream source credited above. Please cite the upstream paper; if you are a rights
+holder and object to this inclusion, open an issue at yshy777/zero-edge and the
+directory will be removed.
